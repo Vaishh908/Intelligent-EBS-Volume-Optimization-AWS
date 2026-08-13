@@ -2,9 +2,9 @@
 
 ---
 
-## Project Description
+# Project Description
 
-Intelligent EBS Volume Optimization is a serverless AWS automation project designed to automatically identify and optimize Amazon EBS volumes. The solution scans EBS volumes, identifies volumes using the older `gp2` volume type with the tag `AutoConvert=true`, and automatically converts them to the more efficient `gp3` volume type.
+Intelligent EBS Volume Optimization is a serverless AWS automation project designed to automatically identify and optimize Amazon EBS volumes. The solution scans EBS volumes, identifies volumes using the older gp2 volume type with the tag `AutoConvert=true`, and automatically converts them to the more efficient gp3 volume type.
 
 The workflow is completely automated using Amazon EventBridge, AWS Step Functions, AWS Lambda, Amazon DynamoDB, Amazon SNS, Amazon CloudWatch, and IAM. Step Functions orchestrates the complete workflow, while Lambda functions perform volume filtering, modification, verification, logging, and notification tasks.
 
@@ -12,7 +12,7 @@ The project also maintains an audit trail in DynamoDB and sends an SNS notificat
 
 ---
 
-## Objective
+# Objective
 
 The main objective of this project is to build a serverless automation pipeline that:
 
@@ -29,7 +29,7 @@ The main objective of this project is to build a serverless automation pipeline 
 
 ---
 
-## Prerequisites
+# Prerequisites
 
 Before implementing the project, the following requirements are needed:
 
@@ -40,13 +40,17 @@ Before implementing the project, the following requirements are needed:
 * Basic knowledge of IAM
 * Basic knowledge of Amazon EC2 and EBS
 * Basic understanding of serverless architecture
-
+  
+---
 
 # Architectural Diagram
 
+
 <img width="1536" height="1024" alt="ChatGPT Image Aug 13, 2026, 06_47_57 PM" src="https://github.com/user-attachments/assets/1b13276e-26f6-453d-b986-9943713109fc" />
 
-### AWS Permissions
+---
+
+# AWS Permissions
 
 The IAM roles used by the project should have only the permissions required for their specific tasks.
 
@@ -63,7 +67,7 @@ Required service access includes:
 
 ---
 
-## Technologies Used
+# Technologies Used
 
 | AWS Service        | Purpose                                |
 | ------------------ | -------------------------------------- |
@@ -924,200 +928,6 @@ Intelligent-EBS-Volume-Optimization/
     └── technical-report.pdf
 ```
 
----
-
-# Implementation Steps
-
-### 1. Create the EC2/EBS Resource
-
-A Linux EC2 instance was created with an attached `gp2` EBS volume.
-
-### 2. Configure Volume Tag
-
-The EBS volume was tagged with:
-
-```text
-AutoConvert = true
-```
-
-This tag identifies the volume as eligible for automatic optimization.
-
-### 3. Create DynamoDB Table
-
-A DynamoDB table named `EBS-Optimization-Logs` was created to maintain an audit history.
-
-### 4. Create SNS Topic
-
-An SNS topic named `EBS-Volume-Optimization-Notifications` was created for sending optimization notifications.
-
-### 5. Configure IAM
-
-IAM roles were created with permissions required by Lambda and Step Functions.
-
-### 6. Create Lambda Functions
-
-Lambda functions were created for:
-
-* Filtering eligible volumes
-* Converting `gp2` to `gp3`
-* Verifying modification
-* Logging results
-* Sending SNS notifications
-
-### 7. Configure Step Functions
-
-Step Functions was configured to orchestrate the complete optimization workflow.
-
-### 8. Configure EventBridge
-
-An EventBridge scheduled rule was created to automatically start the Step Functions workflow.
-
-### 9. Configure CloudWatch
-
-CloudWatch Logs were used to monitor Lambda execution and troubleshoot failures.
-
-### 10. Execute and Verify
-
-The workflow was executed and verified through:
-
-* Step Functions execution
-* EC2 volume type
-* DynamoDB records
-* SNS notification
-* CloudWatch logs
-
----
-
-# Screenshots
-
-The following screenshots should be included in the GitHub repository:
-
-| No. | Screenshot                       | Description                        |
-| --- | -------------------------------- | ---------------------------------- |
-| 01  | `01-ec2-volume.png`              | EC2/EBS volume before optimization |
-| 02  | `02-volume-tag.png`              | `AutoConvert=true` tag             |
-| 03  | `03-dynamodb-table.png`          | DynamoDB table                     |
-| 04  | `04-sns-topic.png`               | SNS topic                          |
-| 05  | `05-lambda-functions.png`        | Lambda functions                   |
-| 06  | `06-step-function.png`           | Step Functions workflow            |
-| 07  | `07-step-function-execution.png` | Successful execution               |
-| 08  | `08-cloudwatch-logs.png`         | Lambda CloudWatch logs             |
-| 09  | `09-dynamodb-log-entry.png`      | Optimization audit record          |
-| 10  | `10-sns-notification.png`        | Email notification                 |
-| 11  | `11-gp3-volume.png`              | EBS volume after conversion        |
-
----
-
-# Deliverables
-
-The project deliverables include:
-
-* Architecture diagram
-* EC2/EBS test environment
-* Lambda source code
-* Step Functions state machine definition
-* EventBridge scheduled rule
-* DynamoDB audit table
-* SNS notification topic
-* IAM roles and policies
-* CloudWatch logs
-* Successful EBS volume conversion
-* DynamoDB optimization history
-* SNS notification
-* Project screenshots
-* Technical documentation
-
----
-
-# Security Best Practices
-
-Security was considered while designing the serverless workflow.
-
-### IAM Least Privilege
-
-Each service should receive only the permissions required to perform its specific task.
-
-For example:
-
-* Filter Lambda → `DescribeVolumes`
-* Conversion Lambda → `DescribeVolumes`, `ModifyVolume`
-* Logging Lambda → `PutItem` on the DynamoDB table
-* Notification Lambda → `Publish` to the SNS topic
-* Step Functions → Permission to invoke required Lambda functions
-
-Avoid using:
-
-```text
-AdministratorAccess
-```
-
-for the Lambda execution roles.
-
-### Resource-Based Restrictions
-
-Where possible, permissions should be restricted to:
-
-* Specific DynamoDB table
-* Specific SNS topic
-* Required Lambda functions
-* Required EC2/EBS operations
-
-### CloudWatch Monitoring
-
-CloudWatch logs provide visibility into successful executions and errors.
-
-### Audit Trail
-
-DynamoDB maintains a persistent record of volume optimization activities.
-
----
-
-# Real-World Challenges and Handling
-
-### Challenge 1: Identifying Only Eligible Volumes
-
-Not every EBS volume should be modified.
-
-**Solution:** The Lambda function checks both:
-
-```text
-VolumeType = gp2
-```
-
-and:
-
-```text
-AutoConvert = true
-```
-
-before initiating a conversion.
-
-### Challenge 2: Volume Modification Takes Time
-
-EBS volume modification is not necessarily instantaneous.
-
-**Solution:** Step Functions can introduce a wait state and invoke a verification Lambda using `DescribeVolumeModifications`.
-
-### Challenge 3: Tracking Previous Configuration
-
-After conversion, it is important to know what the original volume type was.
-
-**Solution:** The previous volume type is captured and stored in DynamoDB before or during the optimization workflow.
-
-### Challenge 4: Notification
-
-Users need confirmation when an optimization is completed.
-
-**Solution:** SNS sends an email notification containing the Volume ID, Region, previous type, new type, and status.
-
-### Challenge 5: Troubleshooting
-
-Serverless workflows can involve multiple services, making troubleshooting difficult.
-
-**Solution:** CloudWatch Logs and Step Functions execution history provide visibility into each stage of the workflow.
-
----
-
 # Results
 
 The project successfully demonstrated an automated EBS volume optimization workflow using AWS serverless services. The system identified EBS volumes using the `gp2` volume type and the `AutoConvert=true` tag, then initiated their conversion to `gp3`.
@@ -1156,6 +966,5 @@ The project provided practical experience with event-driven architecture, server
 
 Overall, the solution demonstrates how repetitive cloud infrastructure tasks can be automated while maintaining visibility, auditability, and controlled access.
 
----
 
 
