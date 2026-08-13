@@ -107,6 +107,8 @@ us-east-1
 
 The EC2 instance will provide the EBS volume that will be used for testing.
 
+<img width="1899" height="1013" alt="Screenshot 2026-08-13 191354" src="https://github.com/user-attachments/assets/11c37c28-2c37-483f-bf11-27c58afbb3b7" />
+
 ---
 
 ## Step 2: Identify the EBS Volume
@@ -134,10 +136,7 @@ Example:
 Volume ID:
 vol-xxxxxxxxxxxxxxxxx
 ```
-
----
-
-## Step 3: Add the AutoConvert Tag
+ Add the AutoConvert Tag
 
 Select the EBS volume and choose:
 
@@ -162,10 +161,11 @@ Volume Type = gp2
 AND
 AutoConvert = true
 ```
+<img width="1920" height="1080" alt="Screenshot 2026-08-13 110443" src="https://github.com/user-attachments/assets/8cd1dc3d-4dec-46c1-a13a-d3da4323d83b" />
 
 ---
 
-# Step 4: Create DynamoDB Table
+# Step 3: Create DynamoDB Table
 
 Navigate to:
 
@@ -210,6 +210,7 @@ us-east-1
 Timestamp:
 2026-08-13T12:00:00
 ```
+<img width="1920" height="1080" alt="Screenshot 2026-08-13 112601" src="https://github.com/user-attachments/assets/d03e7474-0f4f-4cc2-b444-26abc9107cf7" />
 
 ---
 
@@ -231,6 +232,7 @@ Create the topic:
 ```text
 EBS-Volume-Optimization-Notifications
 ```
+<img width="1920" height="1080" alt="Screenshot 2026-08-13 110640" src="https://github.com/user-attachments/assets/bd31b4e0-c4ac-48b6-8cd5-f4da7b16173b" />
 
 ---
 
@@ -251,6 +253,12 @@ your-email@example.com
 Confirm the subscription from the confirmation email sent by AWS SNS.
 
 The SNS topic will be used to notify the user after an EBS volume is converted.
+
+<img width="1920" height="1080" alt="Screenshot 2026-08-13 111448" src="https://github.com/user-attachments/assets/10a0a086-d85a-4a7e-ab91-504b52b679b2" />
+
+<img width="1920" height="1080" alt="Screenshot 2026-08-13 112004" src="https://github.com/user-attachments/assets/0e878307-cc86-43cc-bddf-e63b1cfedca6" />
+
+<img width="1920" height="1080" alt="Screenshot 2026-08-13 112016" src="https://github.com/user-attachments/assets/0e143e6c-bca2-4f99-ba22-7faf3701671a" />
 
 ---
 
@@ -280,6 +288,8 @@ The Lambda role should have permissions required to:
 * Publish messages to SNS
 
 For production environments, use resource-scoped permissions instead of broad permissions such as `AdministratorAccess`.
+
+<img width="1920" height="1080" alt="Screenshot 2026-08-13 112713" src="https://github.com/user-attachments/assets/d229e048-b8ec-4680-8d98-99554de6aa44" />
 
 ---
 
