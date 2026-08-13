@@ -16,9 +16,9 @@ The project also maintains an audit trail in DynamoDB and sends an SNS notificat
 
 The main objective of this project is to build a serverless automation pipeline that:
 
-* Identifies EBS volumes using `gp2`
+* Identifies EBS volumes using gp2
 * Filters volumes using the `AutoConvert=true` tag
-* Converts eligible `gp2` volumes to `gp3`
+* Converts eligible gp2 volumes to gp3
 * Verifies the modification status
 * Stores conversion history in DynamoDB
 * Sends notifications through SNS
