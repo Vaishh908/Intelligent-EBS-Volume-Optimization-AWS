@@ -948,8 +948,6 @@ Status: COMPLETED
 
 Progress: 100%
 ```
-<img width="1920" height="1080" alt="Screenshot 2026-08-13 151803" src="https://github.com/user-attachments/assets/415598df-fed8-4706-b388-c52669a2cbd7" />
-
 ---
 
 # Conclusion
