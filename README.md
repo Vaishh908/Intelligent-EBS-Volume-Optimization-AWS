@@ -96,15 +96,15 @@ us-east-1
 
 Verify access to the following services:
 
-Amazon EC2
-Amazon EBS
-AWS Lambda
-AWS Step Functions
-Amazon EventBridge
-Amazon DynamoDB
-Amazon SNS
-Amazon CloudWatch
-AWS IAM
+- Amazon EC2
+- Amazon EBS
+- AWS Lambda
+- AWS Step Functions
+- Amazon EventBridge
+- Amazon DynamoDB
+- Amazon SNS
+- Amazon CloudWatch
+- AWS IAM
 
 ---
 
@@ -125,11 +125,11 @@ t3.micro
 Region:
 us-east-1
 
-Ensure that the instance uses Amazon EBS storage.
+- Ensure that the instance uses Amazon EBS storage.
 
-Launch the instance and verify that it is in the Running state.
+- Launch the instance and verify that it is in the Running state.
 
-The EC2 instance provides the EBS volume used for the optimization test.
+- The EC2 instance provides the EBS volume used for the optimization test.
 
 ---
 
@@ -234,7 +234,7 @@ Create subscription
 Configure:
 
 Protocol:
-Email
+- Email
 
 
 Endpoint:
@@ -242,9 +242,9 @@ your-email@example.com
 
 Create the subscription.
 
-Open the confirmation email received from Amazon SNS and confirm the subscription.
+- Open the confirmation email received from Amazon SNS and confirm the subscription.
 
-The confirmed subscription will receive the final optimization result.
+- The confirmed subscription will receive the final optimization result.
 
 ---
 
@@ -255,18 +255,18 @@ Create the required IAM roles for the Lambda functions and Step Functions.
 For Lambda:
 
 Trusted Entity:
-AWS Service
+- AWS Service
 
 
 Use Case:
-Lambda
+- Lambda
 
 The Lambda execution role should provide only the required permissions for:
 
-EC2/EBS operations
-CloudWatch Logs
-DynamoDB
-SNS
+- EC2/EBS operations
+- CloudWatch Logs
+- DynamoDB
+- SNS
 
 For Step Functions, create or configure a role that allows the state machine to invoke the required Lambda functions.
 
@@ -280,15 +280,15 @@ Avoid using AdministratorAccess for the project.
 
 Before implementing the automation workflow, verify that the following resources are available:
 
-Resource	Configuration
-EC2 Instance	Linux t3.micro
-EBS Volume	gp2
-EBS Tag	AutoConvert=true
-DynamoDB Table	EBS-Optimization-Logs
-SNS Topic	EBS-Volume-Optimization-Notifications
-SNS Subscription	Confirmed
-IAM Roles	Lambda and Step Functions roles
-AWS Region	us-east-1
+- Resource	Configuration
+- EC2 Instance	Linux t3.micro
+- EBS Volume	gp2
+- EBS Tag	AutoConvert=true
+- DynamoDB Table	EBS-Optimization-Logs
+- SNS Topic	EBS-Volume-Optimization-Notifications
+- SNS Subscription	Confirmed
+- IAM Roles	Lambda and Step Functions roles
+- AWS Region	us-east-1
 
 After completing the preparation steps, proceed to the implementation phase.
 
