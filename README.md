@@ -278,8 +278,11 @@ AWS Region	us-east-1
 
 After completing the preparation steps, proceed to the implementation phase.
 
+---
+
 # Project Structure
 
+````text
 Intelligent-EBS-Volume-Optimization/
 │
 ├── README.md
@@ -321,6 +324,9 @@ Intelligent-EBS-Volume-Optimization/
 │
 └── docs/
     └── technical-report.pdf
+````text
+
+---
 
 # Implementation Steps
 
@@ -966,6 +972,8 @@ Status: COMPLETED
 Progress: 100%
 
 These results confirm that the automated EBS volume optimization workflow operated successfully from volume identification through final notification.
+
+---
 
 # Conclusion
 
