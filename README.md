@@ -607,6 +607,7 @@ Select:
 Workflow:
 Standard
 ```
+<img width="1920" height="1080" alt="Screenshot 2026-08-13 130938" src="https://github.com/user-attachments/assets/52fc215b-8560-410d-abd8-074282e9c943" />
 
 Step Functions will orchestrate the complete workflow.
 
