@@ -106,6 +106,8 @@ Amazon SNS
 Amazon CloudWatch
 AWS IAM
 
+---
+
 # Step 2: Create the EC2 Instance
 
 Navigate to:
@@ -128,6 +130,8 @@ Ensure that the instance uses Amazon EBS storage.
 Launch the instance and verify that it is in the Running state.
 
 The EC2 instance provides the EBS volume used for the optimization test.
+
+---
 
  # Step 3: Prepare the EBS Volume
 
@@ -170,6 +174,8 @@ Volume Type = gp2
 AND
 AutoConvert = true
 
+---
+
 # Step 4: Create DynamoDB Table
 
 Navigate to:
@@ -194,6 +200,8 @@ Create the table and verify that its status is Active.
 
 The table is used to maintain an audit trail of EBS optimization operations.
 
+---
+
 # Step 5: Create SNS Topic
 
 Navigate to:
@@ -210,6 +218,8 @@ Create:
 EBS-Volume-Optimization-Notifications
 
 The topic is used to send optimization results.
+
+---
 
 # Step 6: Create SNS Email Subscription
 
@@ -236,6 +246,8 @@ Open the confirmation email received from Amazon SNS and confirm the subscriptio
 
 The confirmed subscription will receive the final optimization result.
 
+---
+
 # Step 7: Create IAM Roles
 
 Create the required IAM roles for the Lambda functions and Step Functions.
@@ -261,6 +273,8 @@ For Step Functions, create or configure a role that allows the state machine to 
 For EventBridge, configure permission to start the Step Functions state machine.
 
 Avoid using AdministratorAccess for the project.
+
+---
 
 # Step 8: Verify the Initial Environment
 
