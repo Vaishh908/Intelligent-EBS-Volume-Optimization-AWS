@@ -1,0 +1,187 @@
+# Components and Their Roles
+
+1 AWS Lambda
+
+AWS Lambda provides the serverless compute layer for the automation.
+
+The Lambda functions perform tasks such as:
+
+Discovering EBS volumes.
+Checking the EBS volume type and tags.
+Identifying eligible gp2 volumes.
+Initiating the conversion from gp2 to gp3.
+Recording optimization information.
+Sending notifications when required.
+
+Lambda eliminates the need for continuously running servers and allows the optimization workflow to execute only when triggered.
+
+2 Amazon EBS
+
+Amazon Elastic Block Store (EBS) provides persistent block storage for EC2 instances.
+
+In this project, EBS is the resource being optimized. The workflow identifies volumes using the gp2 type and checks whether they contain the required AutoConvert=true tag.
+
+Eligible volumes are converted from:
+
+gp2 → gp3
+
+This provides an automated mechanism for modernizing eligible EBS storage.
+
+3 AWS Step Functions
+
+AWS Step Functions orchestrates the complete optimization workflow.
+
+It controls the sequence of operations between the Lambda functions and provides a structured workflow for:
+
+Discovering EBS volumes.
+Checking eligibility.
+Performing the conversion.
+Recording the result.
+Sending notifications.
+
+Step Functions also makes the workflow easier to monitor and troubleshoot because each execution and state can be inspected.
+
+4 Amazon DynamoDB
+
+Amazon DynamoDB is used as the persistent data store for optimization records.
+
+It can maintain information such as:
+
+EBS volume ID.
+Previous volume type.
+New volume type.
+Optimization status.
+Timestamp.
+Processing information.
+
+This provides an audit trail of the automated optimization activities.
+
+5 Amazon CloudWatch
+
+Amazon CloudWatch provides monitoring and logging for the solution.
+
+CloudWatch can be used to:
+
+Monitor Lambda executions.
+View Lambda logs.
+Monitor Step Functions executions.
+Create alarms for failures or abnormal behavior.
+Track the operational status of the automation.
+
+CloudWatch helps administrators identify problems without manually checking every component.
+
+6 Amazon SNS
+
+Amazon Simple Notification Service (SNS) provides notification functionality.
+
+After an optimization operation or important workflow event, SNS can send a notification to subscribed endpoints such as email.
+
+This ensures that administrators are informed about the optimization activity without continuously monitoring the AWS console.
+
+# Overall Workflow
+
+The project follows an automated workflow:
+
+EBS Volumes → Lambda → Step Functions → Eligibility Check → gp2 to gp3 Conversion → DynamoDB → SNS Notification → CloudWatch Monitoring
+
+The process begins by identifying EBS volumes. The automation checks the volume type and the AutoConvert=true tag.
+
+If the volume satisfies the required conditions, the workflow proceeds with the conversion from gp2 to gp3. The result is recorded in DynamoDB, and an SNS notification can be generated to inform the administrator.
+
+CloudWatch provides logs and monitoring information throughout the workflow, while Step Functions coordinates the execution of the individual operations.
+
+# Security Best Practices Used
+
+1 IAM Roles
+
+IAM roles are used to provide AWS services with the permissions required to perform their assigned tasks.
+
+For example, Lambda functions use execution roles rather than storing AWS access keys inside the source code. Step Functions also uses an IAM execution role to invoke the required Lambda functions and interact with other AWS services.
+
+This follows the principle of avoiding hard-coded credentials.
+
+2 Scoped Permissions
+
+Permissions should be limited to only the AWS resources and operations required by each component.
+
+For example, a Lambda function responsible for EBS optimization should have permissions related to the required EBS operations rather than unrestricted access to all AWS services.
+
+Similarly, access to DynamoDB should be limited to the required table and operations, while SNS permissions should be limited to publishing to the required topic.
+
+This follows the principle of least privilege.
+
+3 Resource-Specific Access
+
+Where possible, permissions should reference specific resources instead of using broad wildcards.
+
+For example, permissions can be scoped to the specific:
+
+DynamoDB table.
+SNS topic.
+Lambda functions.
+EBS operations required by the workflow.
+
+This reduces the impact of accidental or unauthorized actions.
+
+4 CloudWatch Logging and Monitoring
+
+CloudWatch logs provide visibility into Lambda executions and workflow activity.
+
+Monitoring helps identify:
+
+Failed Lambda executions.
+Step Functions failures.
+EBS conversion errors.
+Unexpected workflow behavior.
+
+This improves operational security and troubleshooting.
+
+5 Tag-Based Control
+
+The use of the AutoConvert=true tag provides an additional control mechanism.
+
+Instead of automatically modifying every gp2 volume, the workflow only considers volumes explicitly marked for conversion.
+
+This reduces the possibility of unintentionally modifying volumes that should remain unchanged.
+
+# Real-World Challenges Simulated and How They Were Handled
+
+1 Preventing Unintended Volume Conversion
+
+A real production environment may contain many EBS volumes serving different applications. Automatically converting every gp2 volume could result in unintended changes.
+
+To simulate a controlled production scenario, the solution uses the AutoConvert=true tag as an eligibility condition.
+
+Only volumes satisfying the required conditions are processed.
+
+2 Handling Already Optimized Volumes
+
+The environment may contain volumes that are already using gp3.
+
+The workflow checks the current volume type before performing the conversion. Volumes that do not meet the gp2 eligibility condition are not unnecessarily processed.
+
+This prevents repeated or unnecessary optimization attempts.
+
+3 Handling Workflow Failures
+
+Individual AWS operations can fail because of configuration problems, permissions, resource states, or temporary service issues.
+
+Step Functions provides workflow-level visibility so that failed executions and states can be identified. CloudWatch logs can then be used to investigate the corresponding Lambda execution.
+
+This simulates how failures would be investigated in a real production environment.
+
+4 Tracking Optimization History
+
+In a real environment, administrators need to know which resources were modified and when.
+
+DynamoDB provides persistent records of optimization activity, allowing the system to maintain information about processed EBS volumes and their optimization status.
+
+This creates an audit and tracking mechanism for the automated workflow.
+
+5 Administrator Notification
+
+A production automation system should not depend entirely on administrators checking the AWS console.
+
+SNS provides an automated notification mechanism so that important optimization events can be communicated to administrators.
+
+This improves visibility and reduces the need for manual monitoring.
