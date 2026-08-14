@@ -192,15 +192,15 @@ Use only the permissions required by the project rather than granting unnecessar
 
 Before moving to the implementation phase, verify that the following resources are available:
 
-Resource	Configuration
-EC2 Instance	Linux t3.micro
-EBS Volume	gp2
-EBS Tag	AutoConvert=true
-DynamoDB Table	EBS-Optimization-Logs
-SNS Topic	EBS-Volume-Optimization-Notifications
-SNS Subscription	Confirmed
-IAM Role	Lambda execution role
-AWS Region	us-east-1
+Resource	Configuration :
+- EC2 Instance	Linux t3.micro
+- EBS Volume	gp2
+- EBS Tag	AutoConvert=true
+- DynamoDB Table	EBS-Optimization-Logs
+- SNS Topic	EBS-Volume-Optimization-Notifications
+- SNS Subscription	Confirmed
+- IAM Role	Lambda execution role
+- AWS Region	us-east-1
 
 After completing these installation and preparation steps, proceed to the Implementation Steps, where the Lambda functions, Step Functions workflow, EventBridge schedule, CloudWatch monitoring, testing, and verification are configured.
 
