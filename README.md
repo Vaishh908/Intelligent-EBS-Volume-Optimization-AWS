@@ -4,80 +4,98 @@
 
 # Project Description
 
-Intelligent EBS Volume Optimization is a serverless AWS automation project designed to automatically identify and optimize Amazon EBS volumes. The solution scans EBS volumes, identifies volumes using the older gp2 volume type with the tag `AutoConvert=true`, and automatically converts them to the more efficient gp3 volume type.
+Intelligent EBS Volume Optimization is a serverless AWS automation project designed to automatically identify and optimize Amazon EBS volumes. The solution scans EBS volumes, identifies volumes using the older `gp2` volume type with the tag `AutoConvert=true`, and automatically converts eligible volumes to the more efficient `gp3` volume type.
 
-The workflow is completely automated using Amazon EventBridge, AWS Step Functions, AWS Lambda, Amazon DynamoDB, Amazon SNS, Amazon CloudWatch, and IAM. Step Functions orchestrates the complete workflow, while Lambda functions perform volume filtering, modification, verification, logging, and notification tasks.
+The workflow uses Amazon EventBridge, AWS Step Functions, AWS Lambda, Amazon DynamoDB, Amazon SNS, Amazon CloudWatch, and AWS IAM. EventBridge triggers the workflow on a schedule, while Step Functions orchestrates the complete optimization process. Lambda functions perform volume filtering, conversion, verification, logging, and notification tasks.
 
-The project also maintains an audit trail in DynamoDB and sends an SNS notification after the volume optimization process is completed. CloudWatch Logs are used to monitor Lambda execution and troubleshoot errors.
+The project also maintains an audit trail in DynamoDB and sends an SNS notification after the optimization process is completed successfully. CloudWatch Logs provide visibility into Lambda execution and help monitor and troubleshoot the workflow.
 
 ---
 
 # Prerequisites
 
-Before implementing the project, the following requirements are needed:
+Before implementing the project, ensure that the following requirements are available:
 
-* AWS account
-* AWS Management Console access
-* Basic knowledge of AWS services
-* Basic knowledge of Python
-* Basic knowledge of IAM
-* Basic knowledge of Amazon EC2 and EBS
-* Basic understanding of serverless architecture
-  
+- AWS account
+- AWS Management Console access
+- Basic knowledge of AWS services
+- Basic knowledge of Python
+- Basic knowledge of IAM
+- Basic knowledge of Amazon EC2 and EBS
+- Basic understanding of serverless architecture
+
 ---
 
-# Architectural Diagram
+# Architecture Diagram
 
-
-<img width="1536" height="1024" alt="ChatGPT Image Aug 13, 2026, 06_47_57 PM" src="https://github.com/user-attachments/assets/1b13276e-26f6-453d-b986-9943713109fc" />
+<img width="1536" height="1024" alt="Architecture Diagram" src="https://github.com/user-attachments/assets/1b13276e-26f6-453d-b986-9943713109fc" />
 
 ---
 
 # AWS Permissions
 
-The IAM roles used by the project should have only the permissions required for their specific tasks.
+The IAM roles used by the project should follow the principle of least privilege and provide only the permissions required by each AWS service.
 
-Required service access includes:
+The project requires access to:
 
-* Amazon EC2
-* AWS Lambda
-* Amazon EventBridge
-* AWS Step Functions
-* Amazon DynamoDB
-* Amazon SNS
-* Amazon CloudWatch
-* IAM
+- Amazon EC2
+- Amazon EBS
+- AWS Lambda
+- AWS Step Functions
+- Amazon EventBridge
+- Amazon DynamoDB
+- Amazon SNS
+- Amazon CloudWatch
+- AWS IAM
+
+Lambda functions require permissions for:
+
+- Describing EBS volumes
+- Modifying EBS volumes
+- Checking EBS volume modification status
+- Writing CloudWatch Logs
+- Writing records to DynamoDB
+- Publishing messages to SNS
+
+Step Functions requires permission to invoke the required Lambda functions.
+
+EventBridge requires permission to start the Step Functions state machine.
 
 ---
 
 # Technologies Used
 
-| AWS Service        | Purpose                                |
-| ------------------ | -------------------------------------- |
-| Amazon EC2         | Hosts the EBS volumes                  |
-| Amazon EBS         | Target storage volumes                 |
-| AWS Lambda         | Executes optimization logic            |
-| AWS Step Functions | Orchestrates the workflow              |
-| Amazon EventBridge | Triggers the workflow on schedule      |
-| Amazon DynamoDB    | Stores conversion history              |
-| Amazon SNS         | Sends optimization notifications       |
-| Amazon CloudWatch  | Stores Lambda logs and monitoring data |
-| AWS IAM            | Provides secure access control         |
-| Python             | Lambda automation code                 |
-| Boto3              | AWS SDK for Python                     |
+| Technology | Purpose |
+|------------|---------|
+| Amazon EC2 | Provides the test environment and attached EBS volume |
+| Amazon EBS | Storage volume targeted for optimization |
+| AWS Lambda | Performs filtering, conversion, verification, logging, and notification |
+| AWS Step Functions | Orchestrates the complete optimization workflow |
+| Amazon EventBridge | Triggers the workflow on a schedule |
+| Amazon DynamoDB | Stores optimization history and audit records |
+| Amazon SNS | Sends optimization result notifications |
+| Amazon CloudWatch | Provides Lambda logs and monitoring |
+| AWS IAM | Provides controlled access to AWS resources |
+| Python | Lambda function development |
+| Boto3 | AWS SDK for Python |
 
 ---
+
 # Installation Steps
 
-This project is implemented using AWS managed services and does not require any local software installation. The initial setup consists of preparing the AWS environment, creating the required storage, notification, database, and IAM resources before implementing the automation workflow.
+This project uses AWS managed services and does not require local software installation. The installation phase prepares the AWS resources required by the automation workflow.
 
-### Step 1: Prepare the AWS Account
+## Step 1: Prepare the AWS Account
+
 Sign in to the AWS Management Console.
 
-Select the project region, for example:
+Select the project region:
 
+Region:
 us-east-1
-Verify that the required AWS services are available:
+
+Verify access to the following services:
+
 Amazon EC2
 Amazon EBS
 AWS Lambda
@@ -88,127 +106,180 @@ Amazon SNS
 Amazon CloudWatch
 AWS IAM
 
-### Step 2: Create the EC2 Instance
+# Step 2: Create the EC2 Instance
 
 Navigate to:
+
 EC2 → Instances → Launch Instance
+
 Launch a Linux-based EC2 instance.
 
-Use:
+Example configuration:
 
-Instance Type: t3.micro
-Region: us-east-1
-Ensure that the instance uses an Amazon EBS volume.
+Instance Type:
+t3.micro
+
+
+Region:
+us-east-1
+
+Ensure that the instance uses Amazon EBS storage.
+
 Launch the instance and verify that it is in the Running state.
 
-The EC2 instance provides the EBS volume that will be used for the optimization test.
+The EC2 instance provides the EBS volume used for the optimization test.
 
-### Step 3: Prepare the EBS Volume
+ # Step 3: Prepare the EBS Volume
 
 Navigate to:
+
 EC2 → Elastic Block Store → Volumes
+
 Select the EBS volume attached to the EC2 instance.
 
-Verify that the current volume type is:
+Verify that the volume type is:
 
+Volume Type:
 gp2
-Open Actions → Manage tags.
 
-Add the following tag:
+Record the Volume ID.
 
-Key: AutoConvert
-Value: true
+Example:
 
-This tag identifies the volume as eligible for automatic optimization.
+Volume ID:
+vol-005cf3aa1e84e4838
 
-### Step 4: Create the DynamoDB Table
+Select:
+
+Actions → Manage tags
+
+Add:
+
+Key:
+AutoConvert
+
+
+Value:
+true
+
+The Lambda filtering function uses this tag to identify volumes eligible for automatic conversion.
+
+A volume is eligible only when both conditions are satisfied:
+
+Volume Type = gp2
+AND
+AutoConvert = true
+
+# Step 4: Create DynamoDB Table
 
 Navigate to:
+
 DynamoDB → Tables → Create table
 
-Create the table:
+Create:
 
+Table Name:
 EBS-Optimization-Logs
 
-Configure the partition key:
+Configure:
 
-Partition Key: VolumeId
-Data Type: String
-Create the table.
-Verify that the table is active.
+Partition Key:
+VolumeId
 
-The table will later be used by the implementation workflow to maintain an audit record of optimized volumes.
 
-### Step 5: Create the SNS Topic
+Data Type:
+String
+
+Create the table and verify that its status is Active.
+
+The table is used to maintain an audit trail of EBS optimization operations.
+
+# Step 5: Create SNS Topic
 
 Navigate to:
+
 Amazon SNS → Topics → Create topic
 
 Select:
 
-Type: Standard
+Type:
+Standard
 
-Create the topic:
+Create:
 
 EBS-Volume-Optimization-Notifications
-Verify that the SNS topic has been created successfully.
 
-### Step 6: Create the SNS Email Subscription
+The topic is used to send optimization results.
+
+# Step 6: Create SNS Email Subscription
 
 Open:
+
 EBS-Volume-Optimization-Notifications
-Select Create subscription.
-
-Configure:
-
-Protocol: Email
-Endpoint: your-email@example.com
-Create the subscription.
-Open the confirmation email received from AWS SNS.
-Confirm the subscription.
-
-The confirmed subscription will later receive the optimization result generated by the workflow.
-
-### Step 7: Create the IAM Role
-
-Navigate to:
-IAM → Roles → Create role
 
 Select:
 
-Trusted entity: AWS Service
-Use case: Lambda
-Create an IAM role for the Lambda functions.
-Attach the permissions required by the project's Lambda functions, including access for:
-EBS volume description and modification
-EBS volume modification status
+Create subscription
+
+Configure:
+
+Protocol:
+Email
+
+
+Endpoint:
+your-email@example.com
+
+Create the subscription.
+
+Open the confirmation email received from Amazon SNS and confirm the subscription.
+
+The confirmed subscription will receive the final optimization result.
+
+# Step 7: Create IAM Roles
+
+Create the required IAM roles for the Lambda functions and Step Functions.
+
+For Lambda:
+
+Trusted Entity:
+AWS Service
+
+
+Use Case:
+Lambda
+
+The Lambda execution role should provide only the required permissions for:
+
+EC2/EBS operations
 CloudWatch Logs
 DynamoDB
 SNS
 
-Use only the permissions required by the project rather than granting unnecessary administrator-level access.
+For Step Functions, create or configure a role that allows the state machine to invoke the required Lambda functions.
 
-### Step 8: Verify the Initial Environment
+For EventBridge, configure permission to start the Step Functions state machine.
 
-Before moving to the implementation phase, verify that the following resources are available:
+Avoid using AdministratorAccess for the project.
 
-Resource	Configuration :
-- EC2 Instance	Linux t3.micro
-- EBS Volume	gp2
-- EBS Tag	AutoConvert=true
-- DynamoDB Table	EBS-Optimization-Logs
-- SNS Topic	EBS-Volume-Optimization-Notifications
-- SNS Subscription	Confirmed
-- IAM Role	Lambda execution role
-- AWS Region	us-east-1
+# Step 8: Verify the Initial Environment
 
-After completing these installation and preparation steps, proceed to the Implementation Steps, where the Lambda functions, Step Functions workflow, EventBridge schedule, CloudWatch monitoring, testing, and verification are configured.
+Before implementing the automation workflow, verify that the following resources are available:
 
----
+Resource	Configuration
+EC2 Instance	Linux t3.micro
+EBS Volume	gp2
+EBS Tag	AutoConvert=true
+DynamoDB Table	EBS-Optimization-Logs
+SNS Topic	EBS-Volume-Optimization-Notifications
+SNS Subscription	Confirmed
+IAM Roles	Lambda and Step Functions roles
+AWS Region	us-east-1
+
+After completing the preparation steps, proceed to the implementation phase.
 
 # Project Structure
 
-```text
 Intelligent-EBS-Volume-Optimization/
 │
 ├── README.md
@@ -218,24 +289,19 @@ Intelligent-EBS-Volume-Optimization/
 │
 ├── lambda/
 │   ├── filter_volumes/
-│   │   ├── lambda_function.py
-│   │   └── requirements.txt
+│   │   └── lambda_function.py
 │   │
 │   ├── convert_volume/
-│   │   ├── lambda_function.py
-│   │   └── requirements.txt
+│   │   └── lambda_function.py
 │   │
 │   ├── verify_volume/
-│   │   ├── lambda_function.py
-│   │   └── requirements.txt
+│   │   └── lambda_function.py
 │   │
 │   ├── log_optimization/
-│   │   ├── lambda_function.py
-│   │   └── requirements.txt
+│   │   └── lambda_function.py
 │   │
 │   └── send_notification/
-│       ├── lambda_function.py
-│       └── requirements.txt
+│       └── lambda_function.py
 │
 ├── step-functions/
 │   └── state-machine.json
@@ -255,325 +321,119 @@ Intelligent-EBS-Volume-Optimization/
 │
 └── docs/
     └── technical-report.pdf
-```
-
----
 
 # Implementation Steps
 
-## Step 1: Create an EC2 Instance
-
-Open the AWS Management Console and navigate to:
-
-**EC2 → Instances → Launch Instance**
-
-Launch a Linux-based EC2 instance.
-
-Example configuration:
-
-```text
-Instance Type:
-t3.micro
-
-Region:
-us-east-1
-```
-
-The EC2 instance will provide the EBS volume that will be used for testing.
-
-<img width="1899" height="1013" alt="Screenshot 2026-08-13 191354" src="https://github.com/user-attachments/assets/11c37c28-2c37-483f-bf11-27c58afbb3b7" />
-
----
-
-## Step 2: Identify the EBS Volume
+# Step 1: Create the Filter Lambda
 
 Navigate to:
 
-**EC2 → Elastic Block Store → Volumes**
+AWS Lambda → Functions → Create function
 
-Select the EBS volume attached to the EC2 instance.
+Create:
 
-Check the current volume type.
-
-For this project, the source volume should be:
-
-```text
-Volume Type:
-gp2
-```
-
-Record the Volume ID.
-
-Example:
-
-```text
-Volume ID:
-vol-xxxxxxxxxxxxxxxxx
-```
- Add the AutoConvert Tag
-
-Select the EBS volume and choose:
-
-**Actions → Manage tags**
-
-Add the following tag:
-
-```text
-Key:
-AutoConvert
-
-Value:
-true
-```
-
-The Lambda function will use this tag to determine whether the volume is eligible for automatic conversion.
-
-Only volumes satisfying both conditions should be modified:
-
-```text
-Volume Type = gp2
-AND
-AutoConvert = true
-```
-<img width="1920" height="1080" alt="Screenshot 2026-08-13 110443" src="https://github.com/user-attachments/assets/8cd1dc3d-4dec-46c1-a13a-d3da4323d83b" />
-
----
-
-# Step 3: Create DynamoDB Table
-
-Navigate to:
-
-**AWS Console → DynamoDB → Tables → Create table**
-
-Create a table named:
-
-```text
-EBS-Optimization-Logs
-```
-
-Use:
-
-```text
-Partition Key:
-VolumeId
-
-Data Type:
-String
-```
-
-The table will store the history of optimized EBS volumes.
-
-Example record:
-
-```text
-VolumeId:
-vol-005cf3aa1e84e4838
-
-InstanceId:
-i-xxxxxxxxxxxxxxxxx
-
-VolumeType:
-gp2
-
-Size:
-8
-
-Region:
-us-east-1
-
-Timestamp:
-2026-08-13T12:00:00
-```
-<img width="1920" height="1080" alt="Screenshot 2026-08-13 112601" src="https://github.com/user-attachments/assets/d03e7474-0f4f-4cc2-b444-26abc9107cf7" />
-
----
-
-# Step 5: Create SNS Topic
-
-Navigate to:
-
-**Amazon SNS → Topics → Create topic**
-
-Select:
-
-```text
-Type:
-Standard
-```
-
-Create the topic:
-
-```text
-EBS-Volume-Optimization-Notifications
-```
-<img width="1920" height="1080" alt="Screenshot 2026-08-13 110640" src="https://github.com/user-attachments/assets/bd31b4e0-c4ac-48b6-8cd5-f4da7b16173b" />
-
----
-
-## Step 6: Create SNS Subscription
-
-Open the SNS topic and create a subscription.
-
-Example:
-
-```text
-Protocol:
-Email
-
-Endpoint:
-your-email@example.com
-```
-
-Confirm the subscription from the confirmation email sent by AWS SNS.
-
-The SNS topic will be used to notify the user after an EBS volume is converted.
-
-<img width="1920" height="1080" alt="Screenshot 2026-08-13 111448" src="https://github.com/user-attachments/assets/10a0a086-d85a-4a7e-ab91-504b52b679b2" />
-
-<img width="1920" height="1080" alt="Screenshot 2026-08-13 112004" src="https://github.com/user-attachments/assets/0e878307-cc86-43cc-bddf-e63b1cfedca6" />
-
-<img width="1920" height="1080" alt="Screenshot 2026-08-13 112016" src="https://github.com/user-attachments/assets/0e143e6c-bca2-4f99-ba22-7faf3701671a" />
-
----
-
-# Step 7: Create IAM Role for Lambda
-
-Navigate to:
-
-**IAM → Roles → Create role**
-
-Select:
-
-```text
-Trusted Entity:
-AWS Service
-
-Use Case:
-Lambda
-```
-
-The Lambda role should have permissions required to:
-
-* Describe EBS volumes
-* Modify EBS volumes
-* Describe volume modifications
-* Write CloudWatch logs
-* Write records to DynamoDB
-* Publish messages to SNS
-
-For production environments, use resource-scoped permissions instead of broad permissions such as `AdministratorAccess`.
-
-<img width="1920" height="1080" alt="Screenshot 2026-08-13 112713" src="https://github.com/user-attachments/assets/d229e048-b8ec-4680-8d98-99554de6aa44" />
-
----
-
-# Step 8: Create Filter Lambda
-
-Navigate to:
-
-**AWS Lambda → Functions → Create function**
-
-Create a Python Lambda function.
-
-Example:
-
-```text
 Function Name:
 EBS-Filter-Volumes
 
+
 Runtime:
 Python 3.x
-```
 
-The function scans EBS volumes and identifies volumes that satisfy:
+The function scans EBS volumes and identifies volumes satisfying:
 
-```text
 VolumeType = gp2
 AutoConvert = true
-```
 
-Example logic:
+Example:
 
-```python
 import boto3
+
 
 ec2 = boto3.client("ec2")
 
 
+
+
 def lambda_handler(event, context):
+
 
     response = ec2.describe_volumes()
 
+
     eligible_volumes = []
+
 
     for volume in response["Volumes"]:
 
-        volume_type = volume["VolumeType"]
 
         tags = {
             tag["Key"]: tag["Value"]
             for tag in volume.get("Tags", [])
         }
 
-        auto_convert = tags.get("AutoConvert")
 
-        if volume_type == "gp2" and auto_convert == "true":
+        if (
+            volume["VolumeType"] == "gp2"
+            and tags.get("AutoConvert") == "true"
+        ):
+
 
             eligible_volumes.append({
                 "VolumeId": volume["VolumeId"],
-                "VolumeType": volume_type,
+                "PreviousType": volume["VolumeType"],
                 "Size": volume["Size"],
                 "Region": boto3.session.Session().region_name
             })
 
+
     print("Eligible volumes:", eligible_volumes)
+
 
     return {
         "Volumes": eligible_volumes
     }
-```
 
-The function returns the list of eligible volumes to Step Functions.
+The function returns the eligible volumes to Step Functions.
 
----
+# Step 2: Create the Conversion Lambda
 
-# Step 9: Create Conversion Lambda
+Create:
 
-Create another Lambda function:
-
-```text
 Function Name:
 EBS-Convert-Volume
-```
 
-The function receives the Volume ID and converts the volume from `gp2` to `gp3`.
+The function receives the Volume ID and starts the conversion from gp2 to gp3.
 
-Example:
-
-```python
 import boto3
+
 
 ec2 = boto3.client("ec2")
 
 
+
+
 def lambda_handler(event, context):
+
 
     volume_id = event["VolumeId"]
 
-    print(f"Checking volume: {volume_id}")
 
     response = ec2.describe_volumes(
         VolumeIds=[volume_id]
     )
 
+
     volume = response["Volumes"][0]
+
 
     current_type = volume["VolumeType"]
     size = volume["Size"]
 
+
     print(f"Volume ID: {volume_id}")
     print(f"Current Type: {current_type}")
     print(f"Size: {size} GB")
+
 
     if current_type != "gp2":
         return {
@@ -582,219 +442,230 @@ def lambda_handler(event, context):
             "Message": "Volume is not gp2"
         }
 
-    print(f"Converting {volume_id} from gp2 to gp3")
 
     ec2.modify_volume(
         VolumeId=volume_id,
         VolumeType="gp3"
     )
 
+
+    print(f"Conversion started for {volume_id}")
+
+
     return {
         "VolumeId": volume_id,
         "PreviousType": "gp2",
         "NewType": "gp3",
+        "Size": size,
         "Status": "MODIFICATION_STARTED"
     }
-```
 
----
+# Step 3: Create the Verification Lambda
 
-# Step 10: Verify Volume Modification
+Create:
 
-Create a Lambda function for verification:
-
-```text
 Function Name:
 EBS-Verify-Volume
-```
 
-The function uses:
+The function checks the EBS modification status.
 
-```python
-ec2.describe_volume_modifications()
-```
-
-to check whether the conversion has completed.
-
-Example verification logic:
-
-```python
 import boto3
+
 
 ec2 = boto3.client("ec2")
 
 
+
+
 def lambda_handler(event, context):
 
+
     volume_id = event["VolumeId"]
+
 
     response = ec2.describe_volume_modifications(
         VolumeIds=[volume_id]
     )
 
-    modification = response["VolumesModifications"][0]
+
+    modifications = response.get("VolumesModifications", [])
+
+
+    if not modifications:
+        return {
+            "VolumeId": volume_id,
+            "ModificationState": "unknown"
+        }
+
+
+    modification = modifications[0]
+
 
     state = modification["ModificationState"]
+
 
     print(f"Volume: {volume_id}")
     print(f"Modification State: {state}")
 
+
     return {
         "VolumeId": volume_id,
-        "ModificationState": state
+        "ModificationState": state,
+        "PreviousType": event.get("PreviousType", "gp2"),
+        "NewType": event.get("NewType", "gp3"),
+        "Size": event.get("Size", 0)
     }
-```
 
-Possible states include:
+Possible modification states include:
 
-```text
 modifying
 optimizing
 completed
 failed
-```
 
-The Step Functions workflow can wait and check again if the modification is not yet complete.
+The Step Functions workflow waits and checks again until the modification reaches the required state.
 
----
-
-# Step 11: Create DynamoDB Logging Lambda
+# Step 4: Create the DynamoDB Logging Lambda
 
 Create:
 
-```text
 Function Name:
 EBS-Log-Optimization
-```
 
-The function stores the conversion details in DynamoDB.
+The function records the completed optimization in DynamoDB.
 
-Example:
-
-```python
 import boto3
 from datetime import datetime, timezone
 
+
 dynamodb = boto3.resource("dynamodb")
+
 
 table = dynamodb.Table("EBS-Optimization-Logs")
 
 
+
+
 def lambda_handler(event, context):
 
+
     volume_id = event["VolumeId"]
+
 
     item = {
         "VolumeId": volume_id,
         "InstanceId": event.get("InstanceId", "N/A"),
-        "VolumeType": event.get("PreviousType", "gp2"),
+        "PreviousType": event.get("PreviousType", "gp2"),
+        "NewType": event.get("NewType", "gp3"),
         "Size": event.get("Size", 0),
         "Region": boto3.session.Session().region_name,
-        "Timestamp": datetime.now(timezone.utc).isoformat()
+        "Timestamp": datetime.now(timezone.utc).isoformat(),
+        "Status": "COMPLETED"
     }
+
 
     table.put_item(Item=item)
 
+
     print("Optimization logged:", item)
+
 
     return {
         "VolumeId": volume_id,
-        "LogStatus": "SUCCESS"
+        "LogStatus": "SUCCESS",
+        "Status": "COMPLETED"
     }
-```
 
----
-
-# Step 12: Create SNS Notification Lambda
+# Step 5: Create the SNS Notification Lambda
 
 Create:
 
-```text
 Function Name:
 EBS-Send-Notification
-```
 
-The function publishes a message to the SNS topic.
+Configure the SNS topic ARN in the Lambda environment variable:
+
+SNS_TOPIC_ARN
 
 Example:
 
-```python
 import boto3
+import os
+
 
 sns = boto3.client("sns")
 
-TOPIC_ARN = "YOUR_SNS_TOPIC_ARN"
+
+TOPIC_ARN = os.environ["SNS_TOPIC_ARN"]
+
+
 
 
 def lambda_handler(event, context):
 
+
     volume_id = event["VolumeId"]
-    status = event.get("Status", "SUCCESS")
+
 
     message = f"""
 EBS Volume Optimization Result
 
+
 Volume ID: {volume_id}
 
-Previous Type: gp2
-
-New Type: gp3
-
-Status: {status}
 
 Region: {boto3.session.Session().region_name}
+
+
+Previous Type: {event.get("PreviousType", "gp2")}
+
+
+New Type: {event.get("NewType", "gp3")}
+
+
+Status: COMPLETED
+
+
+The EBS volume optimization workflow has completed successfully.
 """
+
 
     sns.publish(
         TopicArn=TOPIC_ARN,
-        Subject="EBS Volume Converted",
+        Subject="EBS Volume Optimization Completed",
         Message=message
     )
 
+
     print("SNS notification sent")
+
 
     return {
         "VolumeId": volume_id,
         "NotificationStatus": "SENT"
     }
-```
 
-Replace:
+Using an environment variable avoids hard-coding the SNS topic ARN directly into the source code.
 
-```text
-YOUR_SNS_TOPIC_ARN
-```
-
-with the ARN of your SNS topic.
-
----
-
-# Step 13: Create Step Functions State Machine
+# Step 6: Create Step Functions State Machine
 
 Navigate to:
 
-**AWS Step Functions → State machines → Create state machine**
+AWS Step Functions → State machines → Create state machine
 
 Select:
 
-```text
-Workflow:
+Workflow Type:
 Standard
-```
-<img width="1920" height="1080" alt="Screenshot 2026-08-13 130938" src="https://github.com/user-attachments/assets/52fc215b-8560-410d-abd8-074282e9c943" />
 
-Step Functions will orchestrate the complete workflow.
+Step Functions coordinates the complete workflow.
 
-The workflow can be structured as:
+The intended workflow is:
 
-```text
 Start
   |
   v
 Filter Volumes
-  |
-  v
-Check Eligible Volumes
   |
   v
 Convert gp2 → gp3
@@ -805,6 +676,14 @@ Wait
   v
 Verify Modification
   |
+  +---- modifying/optimizing ----+
+  |                              |
+  |                              v
+  |                            Wait
+  |                              |
+  +------------------------------+
+  |
+  | completed
   v
 Log to DynamoDB
   |
@@ -813,288 +692,287 @@ Send SNS Notification
   |
   v
 Success
-```
 
----
+# Step 7: Configure Step Functions Workflow
 
-## Step 14: Configure Step Functions Workflow
+The state machine should contain the following logical states:
 
-A simplified Amazon States Language definition can be structured as follows:
-
-```json
-{
-  "StartAt": "FilterVolumes",
-  "States": {
-    "FilterVolumes": {
-      "Type": "Task",
-      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:EBS-Filter-Volumes",
-      "Next": "ConvertVolumes"
-    },
-    "ConvertVolumes": {
-      "Type": "Map",
-      "ItemsPath": "$.Volumes",
-      "Iterator": {
-        "StartAt": "ConvertVolume",
-        "States": {
-          "ConvertVolume": {
-            "Type": "Task",
-            "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:EBS-Convert-Volume",
-            "End": true
-          }
-        }
-      },
-      "Next": "LogOptimization"
-    },
-    "LogOptimization": {
-      "Type": "Task",
-      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:EBS-Log-Optimization",
-      "Next": "SendNotification"
-    },
-    "SendNotification": {
-      "Type": "Task",
-      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:EBS-Send-Notification",
-      "End": true
-    }
-  }
-}
-```
-
-Replace:
-
-```text
-REGION
-ACCOUNT_ID
-```
-
-with the appropriate AWS values.
-
----
-
-# Step 15: Create EventBridge Scheduled Rule
-
-Navigate to:
-
-**Amazon EventBridge → Rules → Create rule**
-
-Create a scheduled rule.
-
-Example:
-
-```text
-Rule Name:
-EBS-Optimization-Daily
-
-Schedule:
-Daily
-```
-
-Configure the Step Functions state machine as the target.
-
-The workflow will then execute automatically according to the configured schedule.
-
----
-
-# Step 16: Configure CloudWatch Logs
-
-AWS Lambda automatically sends execution logs to Amazon CloudWatch when the Lambda execution role has the required logging permissions.
-
-Navigate to:
-
-**CloudWatch → Logs → Log groups**
-
-Select the Lambda function log group.
-
-Example:
-
-```text
-/aws/lambda/EBS-Filter-Volumes
-/aws/lambda/EBS-Convert-Volume
-/aws/lambda/EBS-Verify-Volume
-/aws/lambda/EBS-Log-Optimization
-/aws/lambda/EBS-Send-Notification
-```
-
-CloudWatch logs can be used to verify:
-
-* Volume discovery
-* Current volume type
-* Conversion request
-* Modification status
-* DynamoDB logging
-* SNS notification
-* Errors
-
----
-
-# Step 17: Test the Workflow
-
-Before relying on the scheduled EventBridge rule, manually start the Step Functions execution.
-
-Navigate to:
-
-**Step Functions → State Machines → EBS Volume Optimization**
-
-Click:
-
-**Start execution**
-
-Monitor each state.
-
-Expected workflow:
-
-```text
 FilterVolumes
       ↓
 ConvertVolumes
       ↓
-Wait / Verify
+WaitForModification
+      ↓
+VerifyVolume
+      ↓
+CheckModificationStatus
       ↓
 LogOptimization
       ↓
 SendNotification
       ↓
 Success
-```
 
----
+The verification logic should ensure that:
 
-# Step 18: Verify EBS Conversion
+ModificationState = completed
+
+before the workflow continues to DynamoDB logging and SNS notification.
+
+If the state is still:
+
+modifying
+
+or:
+
+optimizing
+
+the workflow should wait and verify again.
+
+If the state is:
+
+failed
+
+the workflow should move to an error or failure state rather than sending a successful completion notification.
+
+# Step 8: Create EventBridge Scheduled Rule
 
 Navigate to:
 
-**EC2 → Volumes**
+Amazon EventBridge → Rules → Create rule
+
+Create:
+
+Rule Name:
+EBS-Optimization-Daily
+
+Configure a daily schedule.
+
+Set the Step Functions state machine as the target.
+
+EventBridge will automatically start the Step Functions workflow according to the configured schedule.
+
+# Step 9: Configure CloudWatch Logs
+
+AWS Lambda automatically sends execution logs to Amazon CloudWatch when the Lambda execution role includes the required logging permissions.
+
+Navigate to:
+
+CloudWatch → Logs → Log groups
+
+Verify the Lambda log groups:
+
+/aws/lambda/EBS-Filter-Volumes
+/aws/lambda/EBS-Convert-Volume
+/aws/lambda/EBS-Verify-Volume
+/aws/lambda/EBS-Log-Optimization
+/aws/lambda/EBS-Send-Notification
+
+CloudWatch Logs can be used to verify:
+
+Volume discovery
+Current volume type
+Conversion request
+Modification status
+DynamoDB logging
+SNS notification
+Errors
+
+# Step 10: Test the Workflow
+
+Before relying on the scheduled EventBridge rule, manually start the Step Functions execution.
+
+Navigate to:
+
+Step Functions → State Machines → EBS Volume Optimization
+
+Select:
+
+Start execution
+
+Monitor each state.
+
+Expected execution:
+
+FilterVolumes
+      ↓
+ConvertVolumes
+      ↓
+WaitForModification
+      ↓
+VerifyVolume
+      ↓
+CheckModificationStatus
+      ↓
+LogOptimization
+      ↓
+SendNotification
+      ↓
+Success
+
+The execution should finish with:
+
+Status:
+Succeeded
+
+# Step 11: Verify EBS Conversion
+
+Navigate to:
+
+EC2 → Volumes
 
 Select the optimized volume.
 
 Verify:
 
-```text
 Previous Type:
 gp2
 
+
 New Type:
 gp3
-```
 
-The volume should now show:
+The current volume type should be:
 
-```text
-Volume Type:
 gp3
-```
-
----
-
-# Step 19: Verify DynamoDB Logs
-
-Navigate to:
-
-**DynamoDB → EBS-Optimization-Logs → Explore table items**
-
-Verify that a record exists for the converted volume.
 
 Example:
 
-```text
+Volume ID:
+vol-005cf3aa1e84e4838
+
+
+Volume Type:
+gp3
+
+# Step 12: Verify DynamoDB Logs
+
+Navigate to:
+
+DynamoDB → EBS-Optimization-Logs → Explore table items
+
+Verify that a record exists for the optimized volume.
+
+Example:
+
 VolumeId:
 vol-005cf3aa1e84e4838
 
-VolumeType:
+
+PreviousType:
 gp2
+
+
+NewType:
+gp3
+
 
 Size:
 8
 
+
 Region:
 us-east-1
 
+
+Status:
+COMPLETED
+
+
 Timestamp:
 2026-08-13T...
-```
 
-This provides an audit trail of the optimization operation.
+This record provides an audit trail of the optimization operation.
 
----
-
-# Step 20: Verify SNS Notification
+# Step 13: Verify SNS Notification
 
 Check the email subscription associated with the SNS topic.
 
-A successful notification should contain information similar to:
+A successful notification should contain:
 
-```text
 EBS Volume Optimization Result
+
 
 Volume ID: vol-005cf3aa1e84e4838
 
-Previous Type: gp2
-
-New Type: gp3
-
-Status: COMPLETED
-
-Progress: 100%
-
-The EBS volume optimization workflow has completed.
-```
-
----
-
-# Step 21: Verify CloudWatch Logs
-
-Open the CloudWatch log group for the Lambda function.
-
-Verify that the Lambda execution contains messages such as:
-
-```text
-Checking volume: vol-005cf3aa1e84e4838
-
-Current Type: gp2
-
-Converting volume from gp2 to gp3
-
-Modification State: completed
-
-SNS notification sent
-```
-
-This confirms that the Lambda functions executed successfully.
-
----
-
-# Results
-
-The project successfully demonstrated an automated EBS volume optimization workflow using AWS serverless services. The system identified EBS volumes using the `gp2` volume type and the `AutoConvert=true` tag, then initiated their conversion to `gp3`.
-
-The Step Functions workflow successfully orchestrated the filtering, conversion, verification, logging, and notification stages. The EBS volume modification completed successfully, and the volume type changed from `gp2` to `gp3`.
-
-The optimization activity was recorded in DynamoDB with details such as Volume ID, previous volume type, size, Region, and timestamp. An SNS notification was also generated to communicate the result of the optimization process. CloudWatch Logs provided execution details for monitoring and troubleshooting.
-
-Example successful result:
-
-```text
-EBS Volume Optimization Result
-
-Volume ID: vol-005cf3aa1e84e4838
 
 Region: us-east-1
 
+
 Previous Type: gp2
+
 
 New Type: gp3
 
+
 Status: COMPLETED
 
+
+The EBS volume optimization workflow has completed successfully.
+
+# Step 14: Verify CloudWatch Logs
+
+Open the CloudWatch log groups for the Lambda functions.
+
+Verify messages similar to:
+
+Checking volume: vol-005cf3aa1e84e4838
+
+
+Current Type: gp2
+
+
+Converting volume from gp2 to gp3
+
+
+Modification State: completed
+
+
+Optimization logged successfully
+
+
+SNS notification sent
+
+These logs confirm successful execution and provide information for troubleshooting.
+
+# Results
+
+The project successfully demonstrated an automated EBS volume optimization workflow using AWS serverless services. The system identified an EBS volume using the gp2 volume type and the AutoConvert=true tag and initiated its conversion to the gp3 volume type.
+
+The Step Functions workflow coordinated the optimization process, including volume filtering, conversion, modification verification, DynamoDB logging, and SNS notification. The EBS volume was successfully converted from gp2 to gp3, and the workflow completed successfully.
+
+The optimization activity was recorded in DynamoDB, providing an audit trail containing information such as the Volume ID, previous volume type, new volume type, size, Region, status, and timestamp. An SNS notification was also successfully generated after the optimization was completed. CloudWatch Logs provided execution details for monitoring and troubleshooting.
+
+The successful test result was:
+
+EBS Volume Optimization Result
+
+
+Volume ID: vol-005cf3aa1e84e4838
+
+
+Region: us-east-1
+
+
+Previous Type: gp2
+
+
+New Type: gp3
+
+
+Status: COMPLETED
+
+
 Progress: 100%
-```
----
+
+These results confirm that the automated EBS volume optimization workflow operated successfully from volume identification through final notification.
 
 # Conclusion
 
-The Intelligent EBS Volume Optimization project successfully demonstrated how AWS serverless services can be integrated to automate EBS storage optimization in a reliable and scalable manner. The solution automatically identifies eligible gp2 EBS volumes using the AutoConvert=true tag and initiates their conversion to the more efficient gp3 volume type.
+The Intelligent EBS Volume Optimization project successfully demonstrated how AWS serverless services can be integrated to automate EBS storage optimization in a reliable and controlled manner. The solution automatically identified eligible gp2 EBS volumes using the AutoConvert=true tag and converted them to the more efficient gp3 volume type.
 
-AWS Lambda handled the volume discovery, conversion, verification, logging, and notification tasks, while AWS Step Functions coordinated these operations into a structured workflow. Amazon EventBridge enabled scheduled execution, DynamoDB maintained an audit trail of optimization activities, SNS provided completion notifications, and CloudWatch enabled monitoring and troubleshooting through execution logs. IAM provided controlled access to the required AWS resources.
+AWS Lambda performed the volume filtering, conversion, verification, logging, and notification tasks, while AWS Step Functions coordinated these operations into a structured workflow. Amazon EventBridge provided scheduled execution, DynamoDB maintained an audit trail of optimization activities, Amazon SNS delivered completion notifications, and Amazon CloudWatch provided monitoring and execution logs. AWS IAM provided controlled access to the required AWS resources.
 
-The successful conversion of the EBS volume from gp2 to gp3, along with the corresponding DynamoDB record, SNS notification, and CloudWatch execution logs, demonstrated that the complete automation workflow operated as expected.
+The successful conversion of the EBS volume from gp2 to gp3, together with the successful Step Functions execution, DynamoDB audit record, SNS notification, and CloudWatch logs, demonstrated that the complete automation workflow operated as expected.
 
-Overall, the project provided practical experience in serverless automation, event-driven architecture, AWS storage optimization, workflow orchestration, monitoring, notification systems, database logging, and IAM-based security. It demonstrates how repetitive infrastructure management tasks can be automated to reduce manual effort while maintaining visibility, auditability, reliability, and controlled access.
+Overall, the project provided practical experience in serverless automation, event-driven architecture, AWS storage optimization, workflow orchestration, monitoring, notification systems, database logging, and IAM-based security. The solution demonstrates how repetitive infrastructure management tasks can be automated to reduce manual effort while maintaining visibility, auditability, reliability, and controlled access to cloud resources.
