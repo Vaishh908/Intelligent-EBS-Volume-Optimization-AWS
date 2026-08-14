@@ -401,6 +401,8 @@ def lambda_handler(event, context):
 
 The function returns the eligible volumes to Step Functions.
 
+---
+
 # Step 2: Create the Conversion Lambda
 
 Create:
@@ -465,6 +467,8 @@ def lambda_handler(event, context):
         "Size": size,
         "Status": "MODIFICATION_STARTED"
     }
+
+ ---
 
 # Step 3: Create the Verification Lambda
 
@@ -531,6 +535,8 @@ failed
 
 The Step Functions workflow waits and checks again until the modification reaches the required state.
 
+---
+
 # Step 4: Create the DynamoDB Logging Lambda
 
 Create:
@@ -581,6 +587,8 @@ def lambda_handler(event, context):
         "LogStatus": "SUCCESS",
         "Status": "COMPLETED"
     }
+
+---
 
 # Step 5: Create the SNS Notification Lambda
 
@@ -653,6 +661,8 @@ The EBS volume optimization workflow has completed successfully.
 
 Using an environment variable avoids hard-coding the SNS topic ARN directly into the source code.
 
+---
+
 # Step 6: Create Step Functions State Machine
 
 Navigate to:
@@ -699,6 +709,8 @@ Send SNS Notification
   v
 Success
 
+---
+
 # Step 7: Configure Step Functions Workflow
 
 The state machine should contain the following logical states:
@@ -741,6 +753,8 @@ failed
 
 the workflow should move to an error or failure state rather than sending a successful completion notification.
 
+---
+
 # Step 8: Create EventBridge Scheduled Rule
 
 Navigate to:
@@ -757,6 +771,8 @@ Configure a daily schedule.
 Set the Step Functions state machine as the target.
 
 EventBridge will automatically start the Step Functions workflow according to the configured schedule.
+
+---
 
 # Step 9: Configure CloudWatch Logs
 
@@ -783,6 +799,8 @@ Modification status
 DynamoDB logging
 SNS notification
 Errors
+
+---
 
 # Step 10: Test the Workflow
 
@@ -821,6 +839,8 @@ The execution should finish with:
 Status:
 Succeeded
 
+---
+
 # Step 11: Verify EBS Conversion
 
 Navigate to:
@@ -850,6 +870,8 @@ vol-005cf3aa1e84e4838
 
 Volume Type:
 gp3
+
+---
 
 # Step 12: Verify DynamoDB Logs
 
@@ -890,6 +912,8 @@ Timestamp:
 
 This record provides an audit trail of the optimization operation.
 
+---
+
 # Step 13: Verify SNS Notification
 
 Check the email subscription associated with the SNS topic.
@@ -916,6 +940,8 @@ Status: COMPLETED
 
 The EBS volume optimization workflow has completed successfully.
 
+---
+
 # Step 14: Verify CloudWatch Logs
 
 Open the CloudWatch log groups for the Lambda functions.
@@ -940,6 +966,8 @@ Optimization logged successfully
 SNS notification sent
 
 These logs confirm successful execution and provide information for troubleshooting.
+
+---
 
 # Results
 
