@@ -1,0 +1,111 @@
+{
+  "Comment": "Intelligent EBS Volume Optimization Workflow",
+
+  "StartAt": "FilterVolumes",
+
+  "States": {
+
+    "FilterVolumes": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:EBS-Filter-Volumes",
+      "Next": "CheckEligibleVolumes"
+    },
+
+    "CheckEligibleVolumes": {
+      "Type": "Choice",
+
+      "Choices": [
+        {
+          "Variable": "$.Volumes[0]",
+          "IsPresent": true,
+          "Next": "ConvertVolumes"
+        }
+      ],
+
+      "Default": "NoVolumesFound"
+    },
+
+    "ConvertVolumes": {
+      "Type": "Map",
+
+      "ItemsPath": "$.Volumes",
+
+      "Iterator": {
+        "StartAt": "ConvertVolume",
+
+        "States": {
+
+          "ConvertVolume": {
+            "Type": "Task",
+            "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:EBS-Convert-Volume",
+            "Next": "WaitForModification"
+          },
+
+          "WaitForModification": {
+            "Type": "Wait",
+            "Seconds": 30,
+            "Next": "VerifyVolume"
+          },
+
+          "VerifyVolume": {
+            "Type": "Task",
+            "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:EBS-Verify-Volume",
+            "Next": "CheckModificationStatus"
+          },
+
+          "CheckModificationStatus": {
+            "Type": "Choice",
+
+            "Choices": [
+              {
+                "Variable": "$.ModificationState",
+                "StringEquals": "completed",
+                "Next": "ConversionCompleted"
+              },
+              {
+                "Variable": "$.ModificationState",
+                "StringEquals": "failed",
+                "Next": "ConversionFailed"
+              }
+            ],
+
+            "Default": "WaitForModification"
+          },
+
+          "ConversionCompleted": {
+            "Type": "Pass",
+            "End": true
+          },
+
+          "ConversionFailed": {
+            "Type": "Fail",
+            "Error": "EBSVolumeModificationFailed",
+            "Cause": "EBS volume modification failed."
+          }
+        }
+      },
+
+      "Next": "LogOptimization"
+    },
+
+    "LogOptimization": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:EBS-Log-Optimization",
+      "Next": "SendNotification"
+    },
+
+    "SendNotification": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:EBS-Send-Notification",
+      "Next": "Success"
+    },
+
+    "Success": {
+      "Type": "Succeed"
+    },
+
+    "NoVolumesFound": {
+      "Type": "Succeed"
+    }
+  }
+}
